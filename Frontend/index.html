@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VoiceFlow Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Background / Landing Content -->
+  <div class="bg-blobs" aria-hidden="true">
+    <span class="blob blob-1"></span>
+    <span class="blob blob-2"></span>
+    <span class="blob blob-3"></span>
+  </div>
+
+  <main class="page">
+    <section class="hero">
+      <div class="hero-top">
+        <div class="brand-mark" aria-hidden="true">
+          <span class="mark-dot"></span>
+          <span class="mark-dot"></span>
+          <span class="mark-dot"></span>
+        </div>
+        <div class="status-pill" id="backendStatus">
+          <span class="status-dot" id="backendStatusDot"></span>
+          <span class="status-text" id="backendStatusText">Backend: checking…</span>
+        </div>
+      </div>
+
+      <h1>VoiceFlow Assistant</h1>
+      <p class="subtitle">
+        A local-first chat widget with voice input, language labels, and smart answers.
+      </p>
+
+      <div class="hero-grid">
+        <div class="card">
+          <h3>What you can ask</h3>
+          <ul>
+            <li>Delivery types, items available, delivery hours</li>
+            <li>Order tracking and payment methods</li>
+            <li>General questions (only if AI fallback is enabled)</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>How to use</h3>
+          <ol>
+            <li>Start the backend: <code>npm start</code></li>
+            <li>Click the chat button (bottom-right)</li>
+            <li>Pick a suggestion chip or type your question</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <h3>Notes</h3>
+          <ul>
+            <li>Runs locally on your machine</li>
+            <li>Mic works best on Chrome (may require internet)</li>
+            <li>Weather + optional AI require internet</li>
+          </ul>
+        </div>
+      </div>
+
+      <section class="how-it-works" aria-label="How it works">
+        <h2>How it works</h2>
+        <p class="how-it-works-sub">
+          Your message is shown instantly, then the backend detects language and returns an answer from the database (or other tools).
+        </p>
+
+        <div class="flow flow-stack" role="img" aria-label="Stack: Frontend, Backend, Database">
+          <div class="flow-step">
+            <div class="flow-icon" aria-hidden="true">UI</div>
+            <div class="flow-title">Frontend (Browser)</div>
+            <div class="flow-desc">Static HTML/CSS/JS chat widget + mic button</div>
+          </div>
+          <div class="flow-arrow" aria-hidden="true"></div>
+
+          <div class="flow-step">
+            <div class="flow-icon" aria-hidden="true">API</div>
+            <div class="flow-title">Node.js Backend</div>
+            <div class="flow-desc">Express endpoints: language + answers + quick questions</div>
+          </div>
+          <div class="flow-arrow" aria-hidden="true"></div>
+
+          <div class="flow-step">
+            <div class="flow-icon" aria-hidden="true">DB</div>
+            <div class="flow-title">PostgreSQL</div>
+            <div class="flow-desc">Knowledge base: questions + answers</div>
+          </div>
+        </div>
+
+        <div class="flow" role="img" aria-label="Flow: User to UI to backend detection and answer, then back to UI">
+          <div class="flow-step">
+            <div class="flow-icon" aria-hidden="true">1</div>
+            <div class="flow-title">You</div>
+            <div class="flow-desc">Type a message or speak (mic)</div>
+          </div>
+          <div class="flow-arrow" aria-hidden="true"></div>
+
+          <div class="flow-step">
+            <div class="flow-icon" aria-hidden="true">2</div>
+            <div class="flow-title">Frontend</div>
+            <div class="flow-desc">Shows your message + typing indicator</div>
+          </div>
+          <div class="flow-arrow" aria-hidden="true"></div>
+
+          <div class="flow-step">
+            <div class="flow-icon" aria-hidden="true">3</div>
+            <div class="flow-title">Backend API</div>
+            <div class="flow-desc">Answer order: weather → intent → DB → optional AI</div>
+          </div>
+          <div class="flow-arrow" aria-hidden="true"></div>
+
+          <div class="flow-step">
+            <div class="flow-icon" aria-hidden="true">4</div>
+            <div class="flow-title">Chat Feed</div>
+            <div class="flow-desc">Updates language label + shows the reply</div>
+          </div>
+        </div>
+      </section>
+
+      <div class="hero-foot">
+        <div class="hint">
+          Tip: start the backend, then open the chat.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- App Loader -->
+  <div id="appLoader">
+    <div class="loader-ring"></div>
+    <p class="loader-text">VoiceFlow</p>
+  </div>
+
+  <!-- Floating Launcher Button -->
+  <button id="chatLauncher" aria-label="Open chat">
+    <span class="launcher-bubbles" aria-hidden="true">
+      <span></span><span></span><span></span>
+    </span>
+    <span id="launcherIcon" class="launcher-icon"></span>
+  </button>
+
+  <!-- Chat Widget -->
+  <div id="chatWrapper" class="hidden">
+
+    <!-- Header -->
+    <header class="chat-header">
+      <div class="brand">
+        <div class="status-dot"></div>
+        <div class="brand-info">
+          <h3>VoiceFlow</h3>
+          <span>Multilingual Assistant</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <label class="icon-btn" title="Toggle theme">
+          <input type="checkbox" id="themeToggle" hidden />
+          <span id="themeIcon">🌙</span>
+        </label>
+        <button class="icon-btn" id="openSettings" title="Settings">⚙️</button>
+        <button class="icon-btn" id="clearChat" title="Clear chat">🗑️</button>
+        <button class="icon-btn" id="closeChat" title="Close">✕</button>
+      </div>
+    </header>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="settings-panel hidden">
+      <div class="setting-row">
+        <label for="autoScrollToggle">Auto Scroll</label>
+        <div class="toggle">
+          <input type="checkbox" id="autoScrollToggle" checked />
+          <span class="slider"></span>
+        </div>
+      </div>
+      <div class="setting-row">
+        <label for="waveToggle">Waveform Animation</label>
+        <div class="toggle">
+          <input type="checkbox" id="waveToggle" checked />
+          <span class="slider"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Intro Card -->
+    <div id="introCard" class="intro-card">
+      <div class="intro-icon">🌐</div>
+      <h4>Multilingual Voice Assistant</h4>
+      <p>Ask about deliveries, tracking, payments & more — in any language.</p>
+    </div>
+
+    <!-- Quick Prompts -->
+    <div id="quickPrompts" class="quick-prompts"></div>
+
+    <!-- Chat Feed -->
+    <div id="chatFeed"></div>
+
+    <!-- Waveform -->
+    <div id="waveform" class="waveform hidden">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-row">
+      <input id="textInput" type="text" placeholder="Type a message…" autocomplete="off" />
+      <button id="recordBtn" class="mic-btn mic-round" title="Voice input" aria-label="Voice input">
+        <span class="mic-icon" aria-hidden="true"></span>
+        <span id="recordLabel" class="sr-only">Tap to Speak</span>
+      </button>
+      <button id="sendBtn" class="send-btn">Send</button>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
