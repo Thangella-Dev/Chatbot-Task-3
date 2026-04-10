@@ -65,6 +65,7 @@ let state = {
   micSession: 0,
   micAbortTimer: null,
   micForceTimer: null,
+  hadConversationBeforeMic: false,
 };
 
 // ================= UTILS =================
@@ -294,6 +295,19 @@ function handleSend() {
 }
 
 // ================= VOICE =================
+function hideLandingPrompts() {
+  if (el.intro) el.intro.style.display = "none";
+  if (el.quickPrompts) el.quickPrompts.classList.add("hidden");
+  clearSuggestions();
+}
+
+function restoreLandingPromptsIfNewChat() {
+  if (!el.chatFeed) return;
+  if (el.chatFeed.children.length !== 0) return;
+  if (el.intro) el.intro.style.display = "";
+  if (el.quickPrompts) el.quickPrompts.classList.remove("hidden");
+}
+
 function setListeningUi(listening) {
   const on = Boolean(listening);
   const stopping = state.micMode === "stopping";
@@ -356,6 +370,7 @@ function finishRecording(session, { send = true } = {}) {
 
   const transcript = `${state.liveTranscriptFinal} ${state.liveTranscriptInterim}`.trim().replace(/\s+/g, " ");
   const err = state.lastSpeechError;
+  const wasNewChat = !state.hadConversationBeforeMic;
 
   state.micMode = "idle";
   state.recording = false;
@@ -363,6 +378,7 @@ function finishRecording(session, { send = true } = {}) {
   state.liveTranscriptFinal = "";
   state.liveTranscriptInterim = "";
   state.lastSpeechError = null;
+  state.hadConversationBeforeMic = false;
   clearMicTimers();
   setListeningUi(false);
 
@@ -385,6 +401,10 @@ function finishRecording(session, { send = true } = {}) {
     state.liveBubble = null;
   }
 
+  if (wasNewChat) {
+    restoreLandingPromptsIfNewChat();
+  }
+
   if (err === "not-allowed") {
     createMessage("bot", "Microphone access is blocked. Allow mic permission in the browser and try again.", "VoiceFlow");
   } else if (err === "no-speech") {
@@ -401,6 +421,10 @@ async function startRecording() {
     return;
   }
   if (state.micMode !== "idle") return;
+
+  // If the user starts with mic, hide default chips so the live transcript is visible.
+  state.hadConversationBeforeMic = Boolean(el.chatFeed?.children?.length);
+  hideLandingPrompts();
 
   // New mic session
   state.micSession += 1;
